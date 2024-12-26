@@ -33,6 +33,14 @@ public class WristAction extends Action {
         }
     }
 
+    public String toString() {
+        return returnType() + " Pos " + this.pos;
+    }
+
+    public String returnType(){
+        return "WristAction";
+    }
+
     public void actuate() {
         upper.setWristPos(pos);
     }

@@ -9,10 +9,7 @@ import org.firstinspires.ftc.teamcode.AutoMaster;
 public class AutoBlueBasket extends AutoMaster{
     @Override
     public void runOpMode() throws InterruptedException {
-        side_color = BLUE;
-        startSide = NEGATIVE;
 
-        // TODO: THIS IS BROKEN!
         initHardware(new Pose2d(30, 62.3, Math.toRadians(-90)));
 
         while(opModeInInit()){
@@ -21,30 +18,31 @@ public class AutoBlueBasket extends AutoMaster{
 
         waitForStart();
         firstPutBlueBasket();
-        resetAfterBlueBasketAndMoveToIntake(0);
+        resetAfterBlueBasketAndMoveToIntake(-0.5,0);
 
-        getYellowSamples(0);
-//        reset();
+        getYellowSamples();
 
         putBlueBasket();
-        resetAfterBlueBasketAndMoveToIntake(10);
+        resetAfterBlueBasketAndMoveToIntake(10,-2);
 
-        getYellowSamples(10);
-//        reset();
+        getYellowSamples();
 
         putBlueBasket();
         reset();
 
-//        moveToGetLastYellowSample();
-        moveAndIntakeLastSample();
+        moveAndIntakeLastBasketSampleBlue();
         reset();
 
         putBlueBasket();
-        reset();
 
-        parkAtObservationFromBasket();
+        hangFromBlueBasket();
 
-        prepareForTeleOp();
+//        parkAtBlueObservationFromBasket();
+//        prepareForTeleOp();
+
+        while(opModeIsActive()){
+            super.update.run();
+        }
 
 
 //        reset();

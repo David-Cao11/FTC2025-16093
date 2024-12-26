@@ -5,6 +5,7 @@ import static org.firstinspires.ftc.teamcode.testings.MotorTest.set_power_mode_o
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -12,9 +13,11 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
 @TeleOp (group = "Testing", name = "Slide Test")
 @Config
+@Disabled
 public class SlideTest extends LinearOpMode {
 
     private final Telemetry telemetry_M = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
@@ -95,6 +98,9 @@ public class SlideTest extends LinearOpMode {
             telemetry_M.addData("Power right", mSlideRight.getPower());
             telemetry_M.addData("encoder_slideLeft", mSlideLeft.getCurrentPosition());
             telemetry_M.addData("encoder_slideRight", mSlideRight.getCurrentPosition());
+
+            telemetry_M.addData("Current left",mSlideLeft.getCurrent(CurrentUnit.MILLIAMPS));
+            telemetry_M.addData("Current right",mSlideRight.getCurrent(CurrentUnit.MILLIAMPS));
 
             telemetry_M.addData("right_velocity", mSlideRight.getVelocity());
             telemetry_M.addData("left_velocity", mSlideLeft.getVelocity());

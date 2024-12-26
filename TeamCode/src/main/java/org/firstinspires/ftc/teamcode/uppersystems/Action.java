@@ -37,21 +37,33 @@ public class Action {
     public void forceStop(){
     }
 
+    public void stop(){
+        actions.remove(this);
+    }
+
+    public String toString(){
+        return "WHY THE HELL IS THIS BEING CALLED ANYWAY ANNIE ZHUANG???";
+    }
+
+    static Action currentAction;
     public static void buildSequence(Runnable runWhileBuilding){
         if(!actions.isEmpty()){
             for (int i=0;i < actions.size();i++) {
-                Action currentAction = actions.get(i);
+                currentAction = actions.get(i);
                 currentAction.actuate(); // Execute current action
 
                 while(!currentAction.canStartNext()){
                     runWhileBuilding.run();
 
-                    if(currentAction.isFinished()){ //|| System.currentTimeMillis() - currentAction.timeOnStart > 10000
-                        currentAction.forceStop();
-                    }
                     if(stopBuilding){
                         currentAction.forceStop();
+                        actions.clear();
+                        stopBuilding = false;
                         break;
+                    }
+
+                    if(currentAction.isFinished()){ //|| System.currentTimeMillis() - currentAction.timeOnStart > 10000
+                        currentAction.stop();
                     }
                 }
             }
@@ -59,7 +71,15 @@ public class Action {
         }
     }
 
+    public static String showCurrentAction(){
+        if(currentAction!=null){
+            return currentAction.toString();
+        }else{
+            return "NO ACTION YET!";
+        }
+    }
     public static void clearActions(){
+        currentAction = null;
         Action.actions.clear();
     }
 

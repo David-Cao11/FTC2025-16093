@@ -4,18 +4,19 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.drive.BarkMecanumDrive;
-import org.firstinspires.ftc.teamcode.drive.TeleOpDrive;
+import org.firstinspires.ftc.teamcode.drive.NewMecanumDrive;
 import org.firstinspires.ftc.teamcode.references.SSValues;
 import org.firstinspires.ftc.teamcode.references.XCYBoolean;
 import org.firstinspires.ftc.teamcode.uppersystems.SuperStructure;
 
 @TeleOp
 @Config
+@Disabled
 public class TestArmPID extends LinearOpMode {
 //    public static int referenceAngle = 45;
     public static int position = 200;
@@ -36,7 +37,7 @@ public class TestArmPID extends LinearOpMode {
                     logic_period();
                     drive_period();
                 },0);
-        BarkMecanumDrive drive =new BarkMecanumDrive(hardwareMap);
+        NewMecanumDrive drive =new NewMecanumDrive(hardwareMap);
 //        ArmFeedforward feedforward = new ArmFeedforward(kS, kCos, kV, kA);
 
 

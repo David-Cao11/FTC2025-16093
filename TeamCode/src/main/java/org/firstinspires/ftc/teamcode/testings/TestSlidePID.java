@@ -4,18 +4,19 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.roadrunner.geometry.Pose2d;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.drive.BarkMecanumDrive;
-import org.firstinspires.ftc.teamcode.drive.TeleOpDrive;
+import org.firstinspires.ftc.teamcode.drive.NewMecanumDrive;
 import org.firstinspires.ftc.teamcode.references.SSValues;
 import org.firstinspires.ftc.teamcode.references.XCYBoolean;
 import org.firstinspires.ftc.teamcode.uppersystems.SuperStructure;
 
 @TeleOp
 @Config
+@Disabled
 public class TestSlidePID extends LinearOpMode {
     public static double x = 12;
     public static double y = 0, heading = 0;
@@ -30,7 +31,7 @@ public class TestSlidePID extends LinearOpMode {
                     drive_period();
                 },
                 0);
-        BarkMecanumDrive drive =new BarkMecanumDrive(hardwareMap);
+        NewMecanumDrive drive =new NewMecanumDrive(hardwareMap);
         XCYBoolean a = new XCYBoolean(()->gamepad1.a);
         XCYBoolean b = new XCYBoolean(()->gamepad1.b);
         XCYBoolean y = new XCYBoolean(()->gamepad1.y);

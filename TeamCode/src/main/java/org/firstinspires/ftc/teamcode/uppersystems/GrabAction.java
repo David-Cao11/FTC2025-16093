@@ -33,6 +33,14 @@ public class GrabAction extends Action {
         }
     }
 
+    public String toString() {
+        return returnType() + " Pos " + this.pos;
+    }
+
+    public String returnType(){
+        return "GrabAction";
+    }
+
     public void actuate() {
         upper.setGrabPos(pos);
     }

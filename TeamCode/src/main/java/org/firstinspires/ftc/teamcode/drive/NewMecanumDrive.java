@@ -42,6 +42,7 @@ import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.gobildapinpoint.GoBildaPinpointDriver;
+import org.firstinspires.ftc.teamcode.opmodes.teleop.TeleOp16093;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequence;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequenceBuilder;
 import org.firstinspires.ftc.teamcode.trajectorysequence.TrajectorySequenceRunner;
@@ -58,7 +59,7 @@ import XCYOS.Task;
  * Simple mecanum drive hardware implementation for REV hardware.
  */
 @Config
-public class BarkMecanumDrive extends MecanumDrive {
+public class NewMecanumDrive extends MecanumDrive {
     public static PIDCoefficients TRANS_PID = new PIDCoefficients(10, 0, 0);
     public static PIDCoefficients HEADING_PID = new PIDCoefficients(8, 0, 1);
 
@@ -83,10 +84,12 @@ public class BarkMecanumDrive extends MecanumDrive {
     private List<Integer> lastEncPositions = new ArrayList<>();
     private List<Integer> lastEncVels = new ArrayList<>();
     private Runnable updateRunnable;
+
+    private double yawHeading = 0;
     public void setUpdateRunnable(Runnable updateRunnable) {
         this.updateRunnable = updateRunnable;
     }
-    public BarkMecanumDrive(HardwareMap hardwareMap) {
+    public NewMecanumDrive(HardwareMap hardwareMap) {
         super(kV, kA, kStatic, TRACK_WIDTH, TRACK_WIDTH, LATERAL_MULTIPLIER);
 
         follower = new HolonomicPIDVAFollower(TRANS_PID, TRANS_PID, HEADING_PID,
@@ -96,7 +99,6 @@ public class BarkMecanumDrive extends MecanumDrive {
 
         batteryVoltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        // TODO: adjust the names of the following hardware devices to match your configuration
         odo = hardwareMap.get(GoBildaPinpointDriver.class,"odo");
         odo.setOffsets(-100,-115);
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
@@ -126,10 +128,10 @@ public class BarkMecanumDrive extends MecanumDrive {
             setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, MOTOR_VELO_PID);
         }
 
-        leftFront.setDirection(DcMotorSimple.Direction.FORWARD);
-        leftRear.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightFront.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightRear.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftRear.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightFront.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightRear.setDirection(DcMotorSimple.Direction.FORWARD);
 
         List<Integer> lastTrackingEncPositions = new ArrayList<>();
         List<Integer> lastTrackingEncVels = new ArrayList<>();
@@ -247,11 +249,6 @@ public class BarkMecanumDrive extends MecanumDrive {
         }
     }
 
-    public double getYaw() {
-        return odo.getHeading();
-    }
-
-
     public void setWeightedDrivePower(Pose2d drivePower) {
         Pose2d vel = drivePower;
 
@@ -273,38 +270,9 @@ public class BarkMecanumDrive extends MecanumDrive {
         setDrivePower(vel);
     }
 
+    public static boolean ignoreDriveCoefficients = false;
     public void setGlobalPower(double x, double y, double rx, SuperStructure.Sequences sequence) {
-        double driveCoefficient;
-
-        if(sequence == SuperStructure.Sequences.INTAKE_FAR || sequence == SuperStructure.Sequences.HIGH_BASKET || sequence == SuperStructure.Sequences.CUSTOM_INTAKE || sequence == SuperStructure.Sequences.HIGH_CHAMBER){
-            driveCoefficient = 0.4;
-        }else if(sequence == SuperStructure.Sequences.INTAKE_NEAR){
-            driveCoefficient = 0.4;
-        }else{
-            driveCoefficient = 0.9;
-        }
-        double botHeading = odo.getHeading();
-        double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
-        double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
-        rotX = rotX * 1.1;
-        rotY = rotY*-driveCoefficient;
-        rotX = -rotX*driveCoefficient;
-        rx = -rx*(driveCoefficient);
-
-        double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
-        double frontLeftPower = (rotY + rotX + rx) / denominator;
-        double backLeftPower = (rotY - rotX + rx) / denominator;
-        double frontRightPower = (rotY - rotX - rx) / denominator;
-        double backRightPower = (rotY + rotX - rx) / denominator;
-
-        leftFront.setPower(frontLeftPower);
-        leftRear.setPower(backLeftPower);
-        rightFront.setPower(frontRightPower);
-        rightRear.setPower(backRightPower);
-    }
-
-    public void setHeadingPower(double x, double y, double rx, SuperStructure.Sequences sequence) {
-        double botHeading = 0;
+        double botHeading = getHeading();
         double driveCoefficientTrans;
         double driveCoefficientRot;
 
@@ -314,15 +282,26 @@ public class BarkMecanumDrive extends MecanumDrive {
 
         rotX = rotX * 1.1;
 
-        if(sequence == SuperStructure.Sequences.INTAKE_FAR || sequence == SuperStructure.Sequences.HIGH_BASKET){
-            driveCoefficientTrans = 0.04;
-            driveCoefficientRot = 0.04;
-        }else if(sequence == SuperStructure.Sequences.INTAKE_NEAR){
-            driveCoefficientTrans = 0.05;
-            driveCoefficientRot = 0.03;
-        }else{
+        if(sequence == SuperStructure.Sequences.INTAKE_FAR || sequence == SuperStructure.Sequences.CUSTOM_INTAKE){
             driveCoefficientTrans = 0.3;
+            driveCoefficientRot = 0.2;
+        }else if(sequence == SuperStructure.Sequences.INTAKE_NEAR){
+            driveCoefficientTrans = 0.4;
             driveCoefficientRot = 0.3;
+        }else if (sequence == SuperStructure.Sequences.LOW_BASKET||sequence==SuperStructure.Sequences.HIGH_BASKET){
+            driveCoefficientTrans = 0.9;
+            driveCoefficientRot = 0.5;
+        } else if (sequence == SuperStructure.Sequences.HIGH_CHAMBER||sequence==SuperStructure.Sequences.ASCENT){
+            driveCoefficientRot = 0.7;
+            driveCoefficientTrans = 0.7;
+        }else{
+            driveCoefficientTrans = 1;
+            driveCoefficientRot = 1;
+        }
+
+        if(ignoreDriveCoefficients) {
+            driveCoefficientTrans = 1;
+            driveCoefficientRot = 1;
         }
 
         y = y*-driveCoefficientTrans;
@@ -341,9 +320,54 @@ public class BarkMecanumDrive extends MecanumDrive {
         rightRear.setPower(backRightPower);
     }
 
-    public void resetHeading(){
-        odo.recalibrateIMU();
+    public void setHeadingPower(double x, double y, double rx, SuperStructure.Sequences sequence) {
+        double botHeading = 0;
+        double driveCoefficientTrans;
+        double driveCoefficientRot;
+
+        double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
+        double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
+
+        rotX = rotX * 1.1;
+
+        if(sequence == SuperStructure.Sequences.INTAKE_FAR || sequence == SuperStructure.Sequences.CUSTOM_INTAKE){
+            driveCoefficientTrans = 0.3;
+            driveCoefficientRot = 0.2;
+        }else if(sequence == SuperStructure.Sequences.INTAKE_NEAR){
+            driveCoefficientTrans = 0.4;
+            driveCoefficientRot = 0.3;
+        }else if (sequence == SuperStructure.Sequences.LOW_BASKET||sequence==SuperStructure.Sequences.HIGH_BASKET){
+            driveCoefficientTrans = 0.9;
+            driveCoefficientRot = 0.5;
+        } else if (sequence == SuperStructure.Sequences.HIGH_CHAMBER||sequence==SuperStructure.Sequences.ASCENT){
+            driveCoefficientRot = 0.7;
+            driveCoefficientTrans = 0.7;
+        }else{
+            driveCoefficientTrans = 1;
+            driveCoefficientRot = 1;
+        }
+
+        if(ignoreDriveCoefficients) {
+            driveCoefficientTrans = 1;
+            driveCoefficientRot = 1;
+        }
+
+        y = y*-driveCoefficientTrans;
+        x = x*driveCoefficientTrans;
+        rx = rx*-driveCoefficientRot;
+
+        double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
+        double frontLeftPower = (rotY + rotX + rx) / denominator;
+        double backLeftPower = (rotY - rotX + rx) / denominator;
+        double frontRightPower = (rotY - rotX - rx) / denominator;
+        double backRightPower = (rotY + rotX - rx) / denominator;
+
+        leftFront.setPower(frontLeftPower);
+        leftRear.setPower(backLeftPower);
+        rightFront.setPower(frontRightPower);
+        rightRear.setPower(backRightPower);
     }
+
     @NonNull
     @Override
     public List<Double> getWheelPositions() {
@@ -417,7 +441,7 @@ public class BarkMecanumDrive extends MecanumDrive {
 
     private double simpleMove_x_Tolerance = 1.25, simpleMove_y_Tolerance = 1.25, simpleMoveRotationTolerance = Math.toRadians(10);
     private double simpleMovePower = 0.95;
-    private boolean simpleMoveIsActivate = false;
+    public boolean simpleMoveIsActivate = false; //private
 
     public void setSimpleMoveTolerance(double x, double y, double rotation) {
         simpleMove_x_Tolerance = x;
@@ -449,18 +473,83 @@ public class BarkMecanumDrive extends MecanumDrive {
     }
 
     //    @Deprecated
+    public boolean simpleMoveInDistress = false;
     public void moveTo(Pose2d endPose, int correctTime_ms) {
+        long startTime = System.currentTimeMillis();
+        simpleMoveInDistress = false;
         initSimpleMove(endPose);
-        while (isBusy())
+        while (isBusy()) {
             updateRunnable.run();
+//            if(System.currentTimeMillis() - startTime > 10000){
+//                simpleMoveIsActivate = false;
+//                setMotorPowers(0, 0, 0, 0);
+//                simpleMoveInDistress = true;
+//            }
+        }
         long endTime = System.currentTimeMillis() + correctTime_ms;
-        while (endTime > System.currentTimeMillis())
+        while (endTime > System.currentTimeMillis()) {
             updateRunnable.run();
+//            if(System.currentTimeMillis() - startTime > 10000){
+//                simpleMoveIsActivate = false;
+//                setMotorPowers(0, 0, 0, 0);
+//                simpleMoveInDistress = true;
+//            }
+        }
         simpleMoveIsActivate = false;
         setMotorPowers(0, 0, 0, 0);
     }
 
-    private Pose2d getSimpleMovePosition() {
+    public void moveTo(Pose2d endPose, int correctTime_ms, Runnable runWhileMoving) {
+        long startTime = System.currentTimeMillis();
+        simpleMoveInDistress = false;
+        initSimpleMove(endPose);
+        while (isBusy()) {
+            updateRunnable.run();
+            runWhileMoving.run();
+//            if(System.currentTimeMillis() - startTime > 10000){
+////                simpleMoveIsActivate = false;
+//                setMotorPowers(0, 0, 0, 0);
+//                simpleMoveInDistress = true;
+//            }
+        }
+        long endTime = System.currentTimeMillis() + correctTime_ms;
+        while (endTime > System.currentTimeMillis()) {
+            updateRunnable.run();
+            runWhileMoving.run();
+//            if(System.currentTimeMillis() - startTime > 10000){
+////                simpleMoveIsActivate = false;
+//                setMotorPowers(0, 0, 0, 0);
+//                simpleMoveInDistress = true;
+//            }
+        }
+        simpleMoveIsActivate = false;
+        setMotorPowers(0, 0, 0, 0);
+    }
+
+    public void moveWithNoBrake(Pose2d...poses){
+        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        for(Pose2d p:poses){
+            moveTo(p,0);
+        }
+        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    }
+
+    public void moveWithoutStopping(Pose2d endPose, int correctTime_ms) {
+        long startTime = System.currentTimeMillis();
+        simpleMoveInDistress = false;
+        initSimpleMove(endPose);
+        while (isBusy()) {
+            updateRunnable.run();
+        }
+        long endTime = System.currentTimeMillis() + correctTime_ms;
+        while (endTime > System.currentTimeMillis()) {
+            updateRunnable.run();
+        }
+        simpleMoveIsActivate = false;
+//        setMotorPowers(0, 0, 0, 0);
+    }
+
+    public Pose2d getSimpleMovePosition() {
         return new Pose2d(transPID_x.getTargetPosition(), transPID_y.getTargetPosition(), moveHeading);
     }
 
@@ -549,11 +638,44 @@ public class BarkMecanumDrive extends MecanumDrive {
     public void updateOdo(){
         odo.update();
     }
-    public void resetOdo(){
-        odo.resetPosAndIMU();
+
+    public double getHeading() {
+        return odo.getHeading() - yawHeading;
     }
-    public double getHeading(){
-        Pose2D pos = odo.getPosition();
-        return pos.getHeading(AngleUnit.DEGREES);
+
+    public void resetHeading(){
+        yawHeading = odo.getHeading();
+    }
+
+    public void resetOdo(){
+        odo.recalibrateIMU();
+    }
+//    public double getHeading(){
+//        Pose2D pos = odo.getPosition();
+//        return pos.getHeading(AngleUnit.DEGREES);
+//    }
+
+    public Pose2d lastStoredPos;
+    public void storeCurrentPos(){
+        if(!simpleMoveIsActivate){
+            lastStoredPos = odo.getPositionAsPose2d();
+        }
+    }
+    public String getStoredPosAsString(){
+        if(lastStoredPos != null){
+            return lastStoredPos.toString();
+        }
+        return "POSE NOT PROPERLY INITIALIZED!!!!!";
+    }
+
+    public String getCurrentPoseAsString(){
+        return odo.getPositionAsPose2d().toString();
+    }
+    public Pose2d getCurrentPose(){
+        return odo.getPositionAsPose2d();
+    }
+
+
+    public void moveToWithSpeedAdjustment(Pose2d target1, double v) {
     }
 }

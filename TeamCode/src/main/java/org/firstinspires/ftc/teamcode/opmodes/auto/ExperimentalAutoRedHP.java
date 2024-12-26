@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import org.firstinspires.ftc.teamcode.AutoMaster;
 
 @Autonomous
-public class AutoRedHP extends AutoMaster{
+public class ExperimentalAutoRedHP extends AutoMaster{
     @Override
     public void runOpMode() throws InterruptedException {
 
@@ -17,28 +17,29 @@ public class AutoRedHP extends AutoMaster{
         }
 
         waitForStart();
-        firstMoveToRedChamberPlace(1);
+        expFirstMoveToRedChamberPlace(1);
         highChamberPlace();
 
-        //        prepareForPushTwoBlueSample();
-        pushTwoRedSamples();
+        VexpPushTwoRedSamples();
 
-        prepareForClawRedSampleUp(0,0);
-        clawRedSampleUp(0,0);
+        expPrepareForClawRedSampleUp(0,0,0);
+        expClawRedSampleUp(0,0);
 
-        moveToRedChamberPlace(4);
+        expMoveToRedChamberPlace(3);
         highChamberPlace();
 
-        prepareForClawRedSampleUp(17,-0.5);
-        clawRedSampleUp(17,-0.5);
+        expPrepareForClawRedSampleUp(17,-0.5,200);
+        expClawRedSampleUp(17,-0.5);
 
-        moveToRedChamberPlace(8);
+        expMoveToRedChamberPlace(6);
         highChamberPlace();
 
-        //simpleParkAtObservation();
-        prepareForClawRedSampleUp(5,0.3);
-        clawRedSampleUp(5,0.3);
-        prepareForTeleOpRed();
+        expPrepareForClawRedSampleUp(17,-0.1,0);
+        expClawRedSampleUp(17,-0.1);
+
+        expMoveToRedChamberPlace(9);
+        highChamberPlace();
+        expPrepareForTeleOpRed();
 
         while(opModeIsActive()){
             super.update.run();
